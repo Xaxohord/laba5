@@ -1,26 +1,25 @@
 ﻿#include <iostream>
 #include <fstream>
-#include <cstring> 
-#include <string> 
+
+
 
 struct Elem
 {
-    int data;   
+    int data;       // Данные
+    // Указатели на соседние вершины
     Elem* left;
     Elem* right;
     Elem* parent;
 };
-
 Elem* MAKE(int data, Elem* p)
 {
-    Elem* q = new Elem;       
+    Elem* q = new Elem;         // Выделяем память под вершину
     q->data = data;
     q->left = nullptr;
     q->right = nullptr;
     q->parent = p;
     return q;
 }
-
 
 void ADD(int data, Elem*& root)
 {
@@ -42,36 +41,7 @@ void ADD(int data, Elem*& root)
     else
         v->right = u;
 }
-
-void PASS(Elem* v)
-{
-    if (v == nullptr)
-        return;
- 
-    PASS(v->left);
-    std::cout << v->data << std::endl;
-
-    PASS(v->right);
-}
-
-Elem* DEEP(int data, Elem* v, int& k)  
-{
-    k += 1;
-    if (v == nullptr)
-        return v;
-    if (v->data == data)
-        return v;
-    if (data < v->data)
-    {
-        return DEEP(data, v->left, k);
-    }
-    else
-    {
-        return DEEP(data, v->right, k);
-    }
-}
-
-Elem* SEARCH(int data, Elem* v)   
+Elem* SEARCH(int data, Elem* v) // v - элемент, от которого начинаем поиск
 {
     if (v == nullptr)
         return v;
@@ -82,13 +52,14 @@ Elem* SEARCH(int data, Elem* v)
     else
         return SEARCH(data, v->right);
 }
-
 void DELETE(int data, Elem*& root)
 {
+    // Проверка на сущ. такого элемента
     Elem* u = SEARCH(data, root);
     if (u == nullptr)
         return;
 
+    // Удаление корня (особый случай)
     if (u->left == nullptr && u->right == nullptr && u == root)
     {
         delete root;
@@ -96,7 +67,8 @@ void DELETE(int data, Elem*& root)
         return;
     }
 
-    if (u->left == nullptr && u->right != nullptr && u == root) 
+    // Присутствует правый потомок
+    if (u->left == nullptr && u->right != nullptr && u == root) // TODO убрать u==root
     {
         Elem* t = u->right;
         while (t->left != nullptr)
@@ -105,7 +77,8 @@ void DELETE(int data, Elem*& root)
         u = t;
     }
 
-    if (u->left != nullptr && u->right == nullptr && u == root) 
+    // Присутствует левый потомок
+    if (u->left != nullptr && u->right == nullptr && u == root) // TODO убрать u==root
     {
         Elem* t = u->left;
         while (t->right != nullptr)
@@ -113,7 +86,8 @@ void DELETE(int data, Elem*& root)
         u->data = t->data;
         u = t;
     }
-  
+
+    // Если оба потомка присутствуют
     if (u->left != nullptr && u->right != nullptr)
     {
         Elem* t = u->right;
@@ -135,53 +109,55 @@ void DELETE(int data, Elem*& root)
         t->parent = u->parent;
     delete u;
 }
-
-
-
-void CLEAR(Elem*& v)
+int SEARCHINT(int data, Elem* v, int dapth) // v - элемент, от которого начинаем поиск
+{
+    if (v == nullptr)
+        return 0;
+    if (v->data == data)
+        return dapth;
+    if (data < v->data)
+        return SEARCHINT(data, v->left, dapth + 1);
+    else
+        return SEARCHINT(data, v->right, dapth + 1);
+}
+void PASS(Elem* v)
 {
     if (v == nullptr)
         return;
-    CLEAR(v->left);
+    // Префиксный
 
-    CLEAR(v->right);
+    PASS(v->left);
+    // Инфиксный
+    std::cout << v->data << std::endl;
 
-    delete v;
-    v = nullptr;
+    PASS(v->right);
+
+    // Постфиксный
 }
 
 
-int main()
-{
-    Elem* root = nullptr; 
 
-    std::ifstream file("1.txt");
-    std::ofstream fin("2.txt");
-    std::string line;
-    while (file>>line)
-    {
-        if (line[0] == 'E')
+
+
+int main() {
+    std::ifstream in("1.txt");
+    std::ofstream out("2.txt");
+    Elem* root = nullptr;
+    char c;
+    int n, m;
+    while (true) {
+        in >> c;
+        if (c == 'E')
             break;
-        if (line[0] == '+')
-            ADD(std::stoi(line), root);
-        if (line[0] == '-')
-            DELETE(std::stoi(line.substr(1, line.length() - 1)), root);
-        if (line[0] == '?')
-        {
-            int k = 0;
-            if ((SEARCH(std::stoi(line.substr(1, line.length() - 1)), root) == nullptr))
-                fin << "n";
-            else
-            {
-                DEEP(std::stoi(line.substr(1, line.length() - 1)), root, k);
-                fin << k;
-            }
+        in >> n;
+        if (c == '+') ADD(n, root);
+        if (c == '-') DELETE(n, root);
+        if (c == '?') {
+            m = SEARCHINT(n, root, 1);
+            if (m == 0) out << "n";
+            else out << m;
         }
+
     }
 
-    PASS(root);
-
-    CLEAR(root);
-
-    return 0;
 }
